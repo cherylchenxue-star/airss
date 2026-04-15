@@ -25,9 +25,10 @@ def build_rss(items: list[NewsItem], output_path: str) -> str:
         entry = fg.add_entry(order="append")
         entry.title(item.title)
         entry.link(href=item.link)
-        heat_info = f" | 🔥热度 {item.pv:,}" if item.pv > 0 else ""
-        desc_prefix = f"【{item.source}{heat_info}】"
+        desc_prefix = f"【{item.source}】"
         entry.description(f"{desc_prefix}{item.description}")
+        if item.pv > 0:
+            entry.category(term=f"🔥热度 {item.pv:,}")
         if item.pub_date:
             entry.pubDate(item.pub_date.astimezone(timezone.utc))
         if item.tags:
