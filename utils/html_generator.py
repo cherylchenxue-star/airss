@@ -121,8 +121,14 @@ _HTML_TEMPLATE = """<!DOCTYPE html>
           <input id="searchInput" type="text" placeholder="搜索标题、摘要、标签、来源..."
                  class="search-glow w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-300 focus:border-indigo-500 focus:outline-none bg-white text-sm" />
         </div>
-        <div class="flex gap-2 overflow-x-auto pb-1 no-scrollbar" id="tagFilters">
-          <button class="tag-pill px-3.5 py-2 rounded-full text-xs font-semibold bg-slate-800 text-white shadow-sm" data-tag="">全部</button>
+        <div class="flex items-center gap-3">
+          <div class="flex items-center bg-white border border-slate-300 rounded-lg p-1 shrink-0">
+            <button class="sort-btn px-3 py-1.5 rounded-md text-xs font-semibold bg-slate-800 text-white" data-sort="heat">按热度</button>
+            <button class="sort-btn px-3 py-1.5 rounded-md text-xs font-semibold text-slate-600 hover:bg-slate-50" data-sort="time">按时间</button>
+          </div>
+          <div class="flex gap-2 overflow-x-auto pb-1 no-scrollbar" id="tagFilters">
+            <button class="tag-pill px-3.5 py-2 rounded-full text-xs font-semibold bg-slate-800 text-white shadow-sm" data-tag="">全部</button>
+          </div>
         </div>
       </div>
     </div>
@@ -176,6 +182,7 @@ const tagColors = {
 
 let currentTag = '';
 let searchKeyword = '';
+let currentSort = 'heat';
 
 function fmtDate(iso) {
   if (!iso) return '未知时间';
@@ -233,7 +240,7 @@ function renderList() {
   const empty = document.getElementById('emptyState');
   const kw = searchKeyword.trim().toLowerCase();
 
-  const filtered = newsData.filter(item => {
+  let filtered = newsData.filter(item => {
     const matchTag = !currentTag || (item.tags || []).includes(currentTag);
     const matchKw = !kw ||
       (item.title || '').toLowerCase().includes(kw) ||
@@ -242,6 +249,12 @@ function renderList() {
       (item.source || '').toLowerCase().includes(kw);
     return matchTag && matchKw;
   });
+
+  if (currentSort === 'time') {
+    filtered.sort((a, b) => new Date(b.pub_date || 0) - new Date(a.pub_date || 0));
+  } else {
+    filtered.sort((a, b) => (b.heat_score || 0) - (a.heat_score || 0));
+  }
 
   renderStats(filtered);
   renderTags(filtered);
@@ -297,6 +310,19 @@ document.getElementById('searchInput').addEventListener('input', e => {
   renderList();
 });
 
+document.querySelectorAll('.sort-btn').forEach(btn => {
+  btn.addEventListener('click', e => {
+    currentSort = e.target.dataset.sort;
+    document.querySelectorAll('.sort-btn').forEach(b => {
+      b.classList.remove('bg-slate-800', 'text-white');
+      b.classList.add('text-slate-600', 'hover:bg-slate-50');
+    });
+    e.target.classList.remove('text-slate-600', 'hover:bg-slate-50');
+    e.target.classList.add('bg-slate-800', 'text-white');
+    renderList();
+  });
+});
+
 renderList();
 </script>
 </body>
@@ -316,6 +342,7 @@ def build_html(items: list[NewsItem], output_path: str) -> str:
             "pub_date": item.pub_date.isoformat() if item.pub_date else None,
             "tags": item.tags,
             "pv": item.pv,
+            "heat_score": item.heat_score,
         })
 
     html = (

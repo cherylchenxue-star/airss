@@ -67,10 +67,11 @@ def aggregate() -> None:
     for item in all_items:
         if item.link and item.link not in seen_links:
             seen_links.add(item.link)
+            item.heat_score = _heat_score(item)
             unique_items.append(item)
 
     # 按 24h 热度排序：24h 内按热度衰减分降序，24h 外按时间倒序
-    unique_items.sort(key=_heat_score, reverse=True)
+    unique_items.sort(key=lambda i: i.heat_score, reverse=True)
 
     output_path = build_rss(unique_items, OUTPUT_RSS_PATH)
     html_path = build_html(unique_items, OUTPUT_HTML_PATH)

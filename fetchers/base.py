@@ -17,3 +17,4 @@ class NewsItem:
     pub_date: datetime | None = None
     tags: list[str] = field(default_factory=list)
     pv: int = 0
+    heat_score: float = 0.0
