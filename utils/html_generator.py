@@ -85,7 +85,7 @@ _HTML_TEMPLATE = """<!DOCTYPE html>
         <div>
           <p class="text-sm font-semibold text-indigo-600 mb-1">AI NEWS AGGREGATOR</p>
           <h2 class="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight">每日AI新闻资讯</h2>
-          <p class="text-slate-500 mt-2 max-w-xl">自动抓取并聚合 AiBase 与 IT之家 AI 频道的前沿资讯，按 24 小时热度智能排序，助你第一时间掌握人工智能领域核心动态。</p>
+          <p class="text-slate-500 mt-2 max-w-xl">按 24 小时热度智能排序，助你第一时间掌握人工智能领域核心动态。</p>
         </div>
         <div class="text-right">
           <div class="text-xs text-slate-400 uppercase tracking-wider">最后更新</div>
