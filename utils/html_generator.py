@@ -253,7 +253,7 @@ function renderList() {
   if (currentSort === 'time') {
     filtered.sort((a, b) => new Date(b.pub_date || 0) - new Date(a.pub_date || 0));
   } else {
-    filtered.sort((a, b) => (b.heat_score || 0) - (a.heat_score || 0));
+    filtered.sort((a, b) => (b.pv || 0) - (a.pv || 0));
   }
 
   renderStats(filtered);
