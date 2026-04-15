@@ -70,9 +70,6 @@ _HTML_TEMPLATE = """<!DOCTYPE html>
           </div>
         </div>
         <div class="flex items-center gap-4">
-          <a href="airss.xml" target="_blank" class="text-sm font-medium text-white/90 hover:text-white flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 transition">
-            <i class="fa fa-rss text-orange-400"></i> RSS
-          </a>
         </div>
       </div>
     </div>
@@ -94,22 +91,22 @@ _HTML_TEMPLATE = """<!DOCTYPE html>
       </div>
 
       <!-- Stats -->
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8">
-        <div class="rounded-xl bg-slate-50 border border-slate-200 p-4">
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-6">
+        <div class="rounded-lg bg-slate-50 border border-slate-200 p-3">
           <div class="text-xs text-slate-500">文章总数</div>
-          <div class="text-2xl font-bold text-slate-900 mt-1" id="statTotal">0</div>
+          <div class="text-xl font-bold text-slate-900 mt-1" id="statTotal">0</div>
         </div>
-        <div class="rounded-xl bg-blue-50 border border-blue-100 p-4">
+        <div class="rounded-lg bg-blue-50 border border-blue-100 p-3">
           <div class="text-xs text-blue-600">AiBase</div>
-          <div class="text-2xl font-bold text-blue-700 mt-1" id="statAibase">0</div>
+          <div class="text-xl font-bold text-blue-700 mt-1" id="statAibase">0</div>
         </div>
-        <div class="rounded-xl bg-emerald-50 border border-emerald-100 p-4">
+        <div class="rounded-lg bg-emerald-50 border border-emerald-100 p-3">
           <div class="text-xs text-emerald-600">IT之家</div>
-          <div class="text-2xl font-bold text-emerald-700 mt-1" id="statIthome">0</div>
+          <div class="text-xl font-bold text-emerald-700 mt-1" id="statIthome">0</div>
         </div>
-        <div class="rounded-xl bg-orange-50 border border-orange-100 p-4">
+        <div class="rounded-lg bg-orange-50 border border-orange-100 p-3">
           <div class="text-xs text-orange-600">24h 内</div>
-          <div class="text-2xl font-bold text-orange-700 mt-1" id="stat24h">0</div>
+          <div class="text-xl font-bold text-orange-700 mt-1" id="stat24h">0</div>
         </div>
       </div>
     </div>
