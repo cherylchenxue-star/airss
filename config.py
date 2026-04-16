@@ -15,7 +15,7 @@ TIMEZONE = "Asia/Shanghai"
 SCHEDULE_HOURS = [6, 14, 24]  # 06:00, 14:00, 00:00
 
 # 请求超时（秒）
-REQUEST_TIMEOUT = 20
+REQUEST_TIMEOUT = 30
 
 # 热度排序配置
 DEFAULT_PV = 5000          # 无阅读量数据时的默认热度基数

@@ -58,8 +58,18 @@ def aggregate() -> None:
     """执行一次完整的抓取、聚合、生成 RSS 流程."""
     logger.info("===== 开始聚合任务 =====")
     all_items = []
-    all_items.extend(fetch_aibase())
-    all_items.extend(fetch_ithome())
+    try:
+        all_items.extend(fetch_aibase())
+    except Exception as exc:
+        logger.warning("AiBase 抓取失败: %s", exc)
+    try:
+        all_items.extend(fetch_ithome())
+    except Exception as exc:
+        logger.warning("IT之家 抓取失败: %s", exc)
+
+    if not all_items:
+        logger.error("所有来源均抓取失败，本次任务结束")
+        return
 
     # 去重：按 link 去重，保留首次出现的条目
     seen_links: set[str] = set()

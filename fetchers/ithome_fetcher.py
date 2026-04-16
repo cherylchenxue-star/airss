@@ -7,6 +7,8 @@ from datetime import datetime, timezone
 
 import requests
 from bs4 import BeautifulSoup
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 from config import DEFAULT_HEADERS, REQUEST_TIMEOUT, SOURCES
 from fetchers.base import NewsItem
@@ -15,10 +17,22 @@ from utils.tagger import auto_tag
 logger = logging.getLogger(__name__)
 
 
+def _session() -> requests.Session:
+    session = requests.Session()
+    retries = Retry(
+        total=3,
+        backoff_factor=1,
+        status_forcelist=[500, 502, 503, 504],
+    )
+    session.mount("https://", HTTPAdapter(max_retries=retries))
+    session.mount("http://", HTTPAdapter(max_retries=retries))
+    return session
+
+
 def fetch() -> list[NewsItem]:
     """抓取 IT之家 AI频道新闻列表."""
     url = SOURCES["ithome"]["url"]
-    resp = requests.get(url, headers=DEFAULT_HEADERS, timeout=REQUEST_TIMEOUT)
+    resp = _session().get(url, headers=DEFAULT_HEADERS, timeout=REQUEST_TIMEOUT)
     resp.raise_for_status()
     soup = BeautifulSoup(resp.text, "lxml")
 
