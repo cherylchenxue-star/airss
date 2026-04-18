@@ -21,130 +21,237 @@ _HTML_TEMPLATE = """<!DOCTYPE html>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" />
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&amp;display=swap" />
 <style>
-  :root {
-    --primary: #4f46e5;
-    --primary-dark: #4338ca;
-  }
-  .glass {
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(10px);
-  }
-  .card-hover {
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans SC', sans-serif; }
+  .headline-font { font-family: 'Noto Serif SC', Georgia, serif; }
+
+  .tag-badge { transition: all 0.2s ease; }
+  .tag-badge:hover { transform: translateY(-1px); box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+
+  .news-card {
     transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    border-left: 3px solid transparent;
   }
-  .card-hover:hover {
+  .news-card:hover {
     transform: translateY(-2px);
-    box-shadow: 0 12px 40px -12px rgba(0, 0, 0, 0.12);
+    box-shadow: 0 10px 28px -4px rgba(0,0,0,0.12);
+    border-left-color: #4f46e5;
   }
-  .source-bar-aibase { background: linear-gradient(180deg, #3b82f6, #2563eb); }
-  .source-bar-ithome { background: linear-gradient(180deg, #10b981, #059669); }
-  .line-clamp-2 {
+
+  .heat-bar {
+    background: linear-gradient(90deg, #e0e7ff 0%, #c7d2fe 50%, #6366f1 100%);
+  }
+
+  .category-tab {
+    position: relative;
+    transition: all 0.2s ease;
+  }
+  .category-tab.active::after {
+    content: '';
+    position: absolute;
+    bottom: -2px; left: 0; right: 0;
+    height: 2px;
+    background: #4f46e5;
+    border-radius: 2px;
+  }
+
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .animate-in {
+    animation: fadeInUp 0.4s ease forwards;
+  }
+
+  .gradient-header {
+    background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #4338ca 100%);
+  }
+
+  .live-indicator {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  .truncate-2 {
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
-  .tag-pill {
-    transition: all 0.15s ease;
+  .truncate-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
   }
-  .tag-pill:hover {
-    transform: scale(1.05);
+
+  .shadow-card {
+    box-shadow: 0 1px 3px 0 rgba(0,0,0,0.05), 0 4px 12px 0 rgba(0,0,0,0.08);
   }
-  .headline-font {
-    font-family: 'Noto Serif SC', Georgia, serif;
-  }
-  .search-glow:focus {
-    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+  .shadow-card-hover {
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.08), 0 10px 24px 0 rgba(0,0,0,0.12);
   }
 </style>
 </head>
-<body class="bg-slate-50 text-slate-800 antialiased">
+<body class="bg-gray-50 min-h-screen">
 
-  <!-- Navbar -->
-  <nav class="sticky top-0 z-50 bg-gradient-to-r from-slate-900 via-indigo-900 to-slate-900 text-white shadow-lg">
-    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+  <!-- 顶部导航 -->
+  <header class="gradient-header text-white shadow-lg sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex items-center justify-between h-16">
-        <div class="flex items-center gap-3">
-          <div class="w-9 h-9 rounded-lg bg-white/10 flex items-center justify-center">
+        <div class="flex items-center space-x-3">
+          <div class="w-9 h-9 bg-white/15 rounded-lg flex items-center justify-center backdrop-blur">
             <i class="fa fa-bolt text-yellow-400 text-lg"></i>
           </div>
           <div>
-            <h1 class="text-lg font-bold tracking-tight headline-font">每日AI新闻资讯</h1>
-            <p class="text-[11px] text-indigo-200 hidden sm:block">聚合 AiBase · IT之家 核心AI动态</p>
+            <h1 class="text-lg font-bold tracking-wide headline-font">每日AI新闻资讯</h1>
+            <p class="text-xs text-indigo-200 -mt-0.5">聚合 AiBase · IT之家 核心AI动态</p>
           </div>
         </div>
-        <div class="flex items-center gap-4">
+        <div class="flex items-center space-x-4">
+          <div class="hidden sm:flex items-center space-x-2 text-sm text-indigo-200">
+            <span class="w-2 h-2 bg-green-400 rounded-full live-indicator"></span>
+            <span id="update-time">{build_time}</span>
+          </div>
+          <a href="airss.xml" target="_blank"
+             class="hidden sm:flex items-center space-x-1.5 bg-white/15 hover:bg-white/25 px-3 py-1.5 rounded-lg text-sm transition-colors backdrop-blur">
+            <i class="fa fa-rss text-orange-300"></i>
+            <span>RSS 订阅</span>
+          </a>
         </div>
       </div>
-    </div>
-  </nav>
-
-  <!-- Hero -->
-  <header class="bg-white border-b border-slate-200">
-    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
-        <div>
-          <p class="text-sm font-semibold text-indigo-600 mb-1">AI NEWS AGGREGATOR</p>
-          <h2 class="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight headline-font">每日AI新闻资讯</h2>
-          <p class="text-slate-500 mt-2 max-w-xl">按 24 小时热度智能排序，助你第一时间掌握人工智能领域核心动态。</p>
-        </div>
-        <div class="text-right">
-          <div class="text-xs text-slate-400 uppercase tracking-wider">最后更新</div>
-          <div class="text-slate-700 font-mono text-sm mt-1" id="buildTime">{build_time}</div>
-        </div>
-      </div>
-
     </div>
   </header>
 
-  <!-- Filters -->
-  <section class="sticky top-16 z-40 glass border-b border-slate-200">
-    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-      <div class="flex flex-col lg:flex-row gap-4">
-        <div class="relative flex-1">
-          <i class="fa fa-search absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"></i>
-          <input id="searchInput" type="text" placeholder="搜索标题、摘要、标签、来源..."
-                 class="search-glow w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-300 focus:border-indigo-500 focus:outline-none bg-white text-sm" />
+  <!-- 统计栏 -->
+  <div class="bg-white border-b border-gray-200 shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+      <div class="flex items-center justify-between flex-wrap gap-3">
+        <div class="flex items-center space-x-6 text-sm">
+          <div class="flex items-center space-x-2">
+            <i class="fa fa-newspaper-o text-gray-400"></i>
+            <span class="text-gray-500">今日AI资讯</span>
+            <span id="total-count" class="font-bold text-indigo-700 text-lg">-</span>
+            <span class="text-gray-400">条</span>
+          </div>
+          <div class="hidden sm:flex items-center space-x-2">
+            <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+            <span class="text-gray-500">AiBase</span>
+            <span id="aibase-count" class="font-semibold text-gray-700">-</span>
+          </div>
+          <div class="hidden sm:flex items-center space-x-2">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+            <span class="text-gray-500">IT之家</span>
+            <span id="ithome-count" class="font-semibold text-gray-700">-</span>
+          </div>
+          <div class="hidden sm:flex items-center space-x-2">
+            <span class="w-1.5 h-1.5 rounded-full bg-orange-500"></span>
+            <span class="text-gray-500">24h内</span>
+            <span id="in24h-count" class="font-semibold text-gray-700">-</span>
+          </div>
         </div>
-        <div class="flex items-center gap-3">
-          <div class="flex items-center bg-white border border-slate-300 rounded-lg p-1 shrink-0">
-            <button class="sort-btn px-3 py-1.5 rounded-md text-xs font-semibold bg-slate-800 text-white" data-sort="heat">按热度</button>
-            <button class="sort-btn px-3 py-1.5 rounded-md text-xs font-semibold text-slate-600 hover:bg-slate-50" data-sort="time">按时间</button>
-          </div>
-          <div class="flex gap-2 overflow-x-auto pb-1 no-scrollbar" id="tagFilters">
-            <button class="tag-pill px-3.5 py-2 rounded-full text-xs font-semibold bg-slate-800 text-white shadow-sm" data-tag="">全部</button>
-          </div>
+        <div class="flex items-center space-x-2">
+          <button onclick="refreshData()" id="refresh-btn"
+                  class="flex items-center space-x-1.5 text-sm text-gray-500 hover:text-indigo-600 px-3 py-1.5 rounded-lg hover:bg-gray-100 transition-colors">
+            <i class="fa fa-refresh" id="refresh-icon"></i>
+            <span>刷新</span>
+          </button>
         </div>
       </div>
     </div>
-  </section>
+  </div>
 
-  <!-- Content -->
-  <main class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-    <div id="newsList" class="space-y-5">
-      <!-- JS rendered -->
-    </div>
+  <!-- 主体内容 -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <div class="flex flex-col lg:flex-row gap-6">
 
-    <div id="emptyState" class="hidden text-center py-20">
-      <div class="w-20 h-20 mx-auto rounded-full bg-slate-100 flex items-center justify-center mb-4">
-        <i class="fa fa-search text-3xl text-slate-400"></i>
+      <!-- 左侧：新闻列表 -->
+      <div class="flex-1 min-w-0">
+        <!-- 分类筛选 -->
+        <div class="bg-white rounded-xl shadow-card p-1 mb-5 flex space-x-1 overflow-x-auto">
+          <button onclick="filterSource('all')" id="tab-all"
+                  class="category-tab active flex-1 min-w-[80px] px-4 py-2.5 text-sm font-medium rounded-lg text-center transition-colors text-indigo-700 bg-indigo-50">
+            <i class="fa fa-th-large mr-1.5"></i>全部
+          </button>
+          <button onclick="filterSource('aibase')" id="tab-aibase"
+                  class="category-tab flex-1 min-w-[80px] px-4 py-2.5 text-sm font-medium rounded-lg text-center transition-colors text-gray-600 hover:bg-gray-50">
+            <i class="fa fa-flag mr-1.5 text-blue-500"></i>AiBase
+          </button>
+          <button onclick="filterSource('ithome')" id="tab-ithome"
+                  class="category-tab flex-1 min-w-[80px] px-4 py-2.5 text-sm font-medium rounded-lg text-center transition-colors text-gray-600 hover:bg-gray-50">
+            <i class="fa fa-globe mr-1.5 text-emerald-500"></i>IT之家
+          </button>
+        </div>
+
+        <!-- 搜索框 -->
+        <div class="relative mb-5">
+          <i class="fa fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+          <input type="text" id="search-input" placeholder="搜索新闻标题、标签、来源..."
+                 oninput="handleSearch(this.value)"
+                 class="w-full pl-11 pr-4 py-3 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all shadow-sm">
+        </div>
+
+        <!-- 新闻列表 -->
+        <div id="news-list" class="space-y-4">
+          <div class="text-center py-20">
+            <i class="fa fa-circle-o-notch fa-spin text-3xl text-gray-300 mb-4"></i>
+            <p class="text-gray-400">正在加载新闻数据...</p>
+          </div>
+        </div>
       </div>
-      <h3 class="text-lg font-semibold text-slate-700">未找到匹配的内容</h3>
-      <p class="text-sm text-slate-500 mt-1">试试切换标签或调整搜索关键词</p>
+
+      <!-- 右侧：侧边栏 -->
+      <aside class="w-full lg:w-80 space-y-5">
+        <!-- 热门标签云 -->
+        <div class="bg-white rounded-xl shadow-card p-5">
+          <h3 class="text-sm font-bold text-gray-800 mb-4 flex items-center">
+            <i class="fa fa-tags text-indigo-500 mr-2"></i>
+            热门标签
+          </h3>
+          <div id="tag-cloud" class="flex flex-wrap gap-2">
+            <span class="text-sm text-gray-400">加载中...</span>
+          </div>
+        </div>
+
+        <!-- 来源分布 -->
+        <div class="bg-white rounded-xl shadow-card p-5">
+          <h3 class="text-sm font-bold text-gray-800 mb-4 flex items-center">
+            <i class="fa fa-pie-chart text-indigo-500 mr-2"></i>
+            来源分布
+          </h3>
+          <div id="source-stats" class="space-y-3">
+            <span class="text-sm text-gray-400">加载中...</span>
+          </div>
+        </div>
+
+        <!-- 关于 -->
+        <div class="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl p-5 border border-indigo-100">
+          <h3 class="text-sm font-bold text-indigo-800 mb-2">关于本站</h3>
+          <p class="text-xs text-indigo-600/80 leading-relaxed">
+            自动抓取并聚合 AiBase 与 IT之家 AI 频道的前沿资讯，按 24 小时热度智能排序，助你第一时间掌握人工智能领域核心动态。
+          </p>
+          <div class="mt-3 flex items-center space-x-3">
+            <a href="airss.xml" target="_blank"
+               class="inline-flex items-center space-x-1 text-xs text-indigo-600 hover:text-indigo-800 font-medium">
+              <i class="fa fa-rss"></i>
+              <span>RSS 源</span>
+            </a>
+            <span class="text-indigo-300">|</span>
+            <span class="text-xs text-indigo-500/60">数据每 6h 更新</span>
+          </div>
+        </div>
+      </aside>
     </div>
   </main>
 
-  <!-- Footer -->
-  <footer class="bg-white border-t border-slate-200 mt-12">
-    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div class="flex flex-col md:flex-row items-center justify-between gap-4">
-        <div class="text-sm text-slate-500">
-          © 2026 每日AI新闻资讯 · 数据源自 <a href="https://news.aibase.com/zh/news" target="_blank" class="text-indigo-600 hover:underline">AiBase</a> 与 <a href="https://next.ithome.com/ai" target="_blank" class="text-indigo-600 hover:underline">IT之家</a>
-        </div>
-        <div class="flex items-center gap-4 text-sm text-slate-500">
-          <a href="airss.xml" target="_blank" class="hover:text-slate-800"><i class="fa fa-rss text-orange-500 mr-1"></i> RSS 订阅</a>
-          <a href="https://github.com/cherylchenxue-star/airss" target="_blank" class="hover:text-slate-800"><i class="fa fa-github mr-1"></i> GitHub</a>
-        </div>
+  <!-- 底部 -->
+  <footer class="bg-white border-t border-gray-200 mt-12">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <div class="flex flex-col sm:flex-row items-center justify-between text-xs text-gray-400">
+        <p>每日AI新闻资讯 · 数据源自 <a href="https://news.aibase.com/zh/news" target="_blank" class="text-indigo-500 hover:underline">AiBase</a> 与 <a href="https://next.ithome.com/ai" target="_blank" class="text-indigo-500 hover:underline">IT之家</a></p>
+        <p class="mt-2 sm:mt-0">仅供信息参考，不代表本站立场</p>
       </div>
     </div>
   </footer>
@@ -153,20 +260,20 @@ _HTML_TEMPLATE = """<!DOCTYPE html>
 const newsData = {json_data};
 
 const tagColors = {
-  '大模型': 'bg-purple-50 text-purple-700 border-purple-200',
-  '芯片算力': 'bg-blue-50 text-blue-700 border-blue-200',
-  '具身智能': 'bg-green-50 text-green-700 border-green-200',
-  'AI应用': 'bg-pink-50 text-pink-700 border-pink-200',
-  '智能硬件': 'bg-indigo-50 text-indigo-700 border-indigo-200',
-  '企业动态': 'bg-orange-50 text-orange-700 border-orange-200',
-  '安全伦理': 'bg-red-50 text-red-700 border-red-200',
-  '投融资': 'bg-yellow-50 text-yellow-700 border-yellow-200',
-  '国内新闻': 'bg-emerald-50 text-emerald-700 border-emerald-200',
-  '海外新闻': 'bg-sky-50 text-sky-700 border-sky-200',
+  '大模型': { color: '#9333ea', bg: '#f3e8ff' },
+  '芯片算力': { color: '#2563eb', bg: '#dbeafe' },
+  '具身智能': { color: '#16a34a', bg: '#dcfce7' },
+  'AI应用': { color: '#db2777', bg: '#fce7f3' },
+  '智能硬件': { color: '#4f46e5', bg: '#e0e7ff' },
+  '企业动态': { color: '#ea580c', bg: '#ffedd5' },
+  '安全伦理': { color: '#dc2626', bg: '#fee2e2' },
+  '投融资': { color: '#ca8a04', bg: '#fef9c3' },
+  '国内新闻': { color: '#059669', bg: '#d1fae5' },
+  '海外新闻': { color: '#0ea5e9', bg: '#e0f2fe' },
 };
 
-let currentTag = '';
-let searchKeyword = '';
+let currentSource = 'all';
+let currentSearch = '';
 let currentSort = 'heat';
 
 function fmtDate(iso) {
@@ -185,43 +292,58 @@ function hoursAgo(iso) {
 }
 
 function sourceMeta(source) {
-  if (source === 'AiBase') return { name: 'AiBase', color: 'text-blue-700 bg-blue-50 border-blue-200', bar: 'source-bar-aibase' };
-  if (source === 'IT之家') return { name: 'IT之家', color: 'text-emerald-700 bg-emerald-50 border-emerald-200', bar: 'source-bar-ithome' };
-  return { name: source, color: 'text-slate-700 bg-slate-100 border-slate-200', bar: 'bg-slate-400' };
+  if (source === 'AiBase') return { name: 'AiBase', color: 'text-blue-700', icon: 'fa-flag', dot: 'bg-blue-500' };
+  if (source === 'IT之家') return { name: 'IT之家', color: 'text-emerald-700', icon: 'fa-globe', dot: 'bg-emerald-500' };
+  return { name: source, color: 'text-gray-700', icon: 'fa-newspaper-o', dot: 'bg-gray-500' };
 }
 
-function renderTags(filteredItems) {
-  const counts = {};
-  filteredItems.forEach(item => {
-    (item.tags || []).forEach(t => counts[t] = (counts[t] || 0) + 1);
-  });
-  const tags = Object.entries(counts).sort((a, b) => b[1] - a[1]);
-  const container = document.getElementById('tagFilters');
-  const allActive = currentTag === '' ? 'bg-slate-800 text-white shadow-sm' : 'bg-white text-slate-600 border border-slate-300 hover:bg-slate-50';
-  container.innerHTML = `<button class="tag-pill px-3.5 py-2 rounded-full text-xs font-semibold whitespace-nowrap ${allActive}" data-tag="">全部</button>`;
-  tags.forEach(([tag, count]) => {
-    const active = currentTag === tag ? 'bg-slate-800 text-white shadow-sm border-transparent' : (tagColors[tag] || 'bg-white text-slate-600 border border-slate-300 hover:bg-slate-50');
-    const el = document.createElement('button');
-    el.className = `tag-pill px-3.5 py-2 rounded-full text-xs font-semibold whitespace-nowrap border ${active}`;
-    el.dataset.tag = tag;
-    el.textContent = `${tag} · ${count}`;
-    container.appendChild(el);
-  });
+function init() {
+  document.getElementById('total-count').textContent = newsData.length;
+  document.getElementById('aibase-count').textContent = newsData.filter(i => i.source === 'AiBase').length;
+  document.getElementById('ithome-count').textContent = newsData.filter(i => i.source === 'IT之家').length;
+  document.getElementById('in24h-count').textContent = newsData.filter(i => i.pub_date && (Date.now() - new Date(i.pub_date).getTime()) < 86400000).length;
+  applyFilters();
+  renderTagCloud();
+  renderSourceStats();
 }
 
-function renderList() {
-  const list = document.getElementById('newsList');
-  const empty = document.getElementById('emptyState');
-  const kw = searchKeyword.trim().toLowerCase();
+function refreshData() {
+  const icon = document.getElementById('refresh-icon');
+  icon.classList.add('fa-spin');
+  applyFilters();
+  renderTagCloud();
+  renderSourceStats();
+  setTimeout(() => icon.classList.remove('fa-spin'), 500);
+}
 
-  let filtered = newsData.filter(item => {
-    const matchTag = !currentTag || (item.tags || []).includes(currentTag);
-    const matchKw = !kw ||
-      (item.title || '').toLowerCase().includes(kw) ||
-      (item.description || '').toLowerCase().includes(kw) ||
-      (item.tags || []).join(' ').toLowerCase().includes(kw) ||
-      (item.source || '').toLowerCase().includes(kw);
-    return matchTag && matchKw;
+function filterSource(src) {
+  currentSource = src;
+  document.querySelectorAll('.category-tab').forEach(btn => {
+    btn.classList.remove('active', 'text-indigo-700', 'bg-indigo-50');
+    btn.classList.add('text-gray-600');
+  });
+  const activeBtn = document.getElementById('tab-' + src);
+  activeBtn.classList.add('active', 'text-indigo-700', 'bg-indigo-50');
+  activeBtn.classList.remove('text-gray-600');
+  applyFilters();
+}
+
+function handleSearch(value) {
+  currentSearch = value.trim().toLowerCase();
+  applyFilters();
+}
+
+function applyFilters() {
+  let filtered = newsData.filter(n => {
+    const matchSrc = currentSource === 'all' ||
+      (currentSource === 'aibase' && n.source === 'AiBase') ||
+      (currentSource === 'ithome' && n.source === 'IT之家');
+    const matchSearch = !currentSearch ||
+      (n.title || '').toLowerCase().includes(currentSearch) ||
+      (n.description || '').toLowerCase().includes(currentSearch) ||
+      (n.tags || []).some(t => t.toLowerCase().includes(currentSearch)) ||
+      (n.source || '').toLowerCase().includes(currentSearch);
+    return matchSrc && matchSearch;
   });
 
   if (currentSort === 'time') {
@@ -230,73 +352,148 @@ function renderList() {
     filtered.sort((a, b) => (b.pv || 0) - (a.pv || 0));
   }
 
-  renderTags(filtered);
+  renderNewsList(filtered);
+}
+
+function renderNewsList(filtered) {
+  const container = document.getElementById('news-list');
 
   if (filtered.length === 0) {
-    list.innerHTML = '';
-    empty.classList.remove('hidden');
+    container.innerHTML = `
+      <div class="text-center py-16 bg-white rounded-xl shadow-card">
+        <i class="fa fa-inbox text-4xl text-gray-300 mb-4"></i>
+        <p class="text-gray-500">没有找到符合条件的新闻</p>
+      </div>
+    `;
     return;
   }
-  empty.classList.add('hidden');
 
-  list.innerHTML = filtered.map((item, idx) => {
-    const meta = sourceMeta(item.source);
-    const timeRel = hoursAgo(item.pub_date);
-    const heatBadge = item.pv ? `<span class="inline-flex items-center gap-1 text-xs font-semibold text-orange-600 bg-orange-50 px-2 py-1 rounded-md border border-orange-100"><i class="fa fa-fire"></i> ${item.pv.toLocaleString()}</span>` : '';
-    return `
-    <article class="card-hover relative flex gap-4 bg-white rounded-2xl p-5 border border-slate-200">
-      <div class="shrink-0 w-1.5 rounded-full ${meta.bar}"></div>
-      <div class="flex-1 min-w-0">
-        <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
-          <h3 class="text-lg font-bold text-slate-900 leading-snug hover:text-indigo-600 transition headline-font">
-            <a href="${item.link}" target="_blank" class="focus:outline-none">${item.title}</a>
-          </h3>
-          <div class="flex items-center gap-2 shrink-0">
-            <span class="px-2.5 py-1 rounded-md text-xs font-semibold border ${meta.color}">${meta.name}</span>
-            ${heatBadge}
+  container.innerHTML = filtered.map((item, i) => renderNewsCard(item, i)).join('');
+}
+
+function renderNewsCard(item, index) {
+  const rank = index + 1;
+  const isTop3 = rank <= 3;
+  const meta = sourceMeta(item.source);
+  const timeRel = hoursAgo(item.pub_date);
+  const heatPercent = Math.min(100, (item.pv || 0) / 200);
+
+  const tagsHtml = (item.tags || []).map(tag => {
+    const tc = tagColors[tag] || { color: '#6b7280', bg: '#f3f4f6' };
+    return `<span class="tag-badge inline-block px-2 py-0.5 rounded text-xs font-medium" style="color:${tc.color};background:${tc.bg};border:1px solid ${tc.color}20;">${tag}</span>`;
+  }).join('');
+
+  const rankBadge = isTop3
+    ? `<span class="w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-500 to-indigo-700 text-white flex items-center justify-center text-sm font-bold shadow-md">${rank}</span>`
+    : `<span class="w-7 h-7 rounded-lg bg-gray-100 text-gray-500 flex items-center justify-center text-sm font-medium">${rank}</span>`;
+
+  return `
+    <article class="news-card animate-in bg-white rounded-xl shadow-card p-5 sm:p-6" style="animation-delay: ${index * 0.03}s">
+      <div class="flex items-start gap-4">
+        <div class="flex-shrink-0 mt-0.5">${rankBadge}</div>
+        <div class="flex-1 min-w-0">
+          <a href="${item.link}" target="_blank" rel="noopener noreferrer" class="group block">
+            <h2 class="headline-font text-base sm:text-lg font-semibold text-gray-900 leading-snug group-hover:text-indigo-700 transition-colors truncate-2">
+              ${item.title}
+            </h2>
+          </a>
+
+          <div class="mt-2 flex flex-wrap gap-1.5">
+            ${tagsHtml}
           </div>
-        </div>
-        <p class="text-sm text-slate-600 mt-2 line-clamp-2 leading-relaxed">${item.description}</p>
-        <div class="flex flex-wrap items-center gap-2 mt-3">
-          ${(item.tags || []).map(t => `<span class="px-2 py-0.5 rounded text-[11px] font-medium border ${tagColors[t] || 'bg-slate-50 text-slate-600 border-slate-200'}">${t}</span>`).join('')}
-        </div>
-        <div class="flex items-center gap-4 mt-4 text-xs text-slate-400">
-          <span class="flex items-center gap-1"><i class="fa fa-clock-o"></i> ${fmtDate(item.pub_date)}</span>
-          ${timeRel ? `<span class="text-slate-500 font-medium">${timeRel}</span>` : ''}
-          <a href="${item.link}" target="_blank" class="ml-auto sm:ml-0 text-indigo-600 hover:text-indigo-700 font-medium flex items-center gap-1">阅读原文 <i class="fa fa-external-link"></i></a>
+
+          <p class="mt-2.5 text-sm text-gray-500 leading-relaxed truncate-3">
+            ${item.description || '暂无摘要'}
+          </p>
+
+          <div class="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-gray-400">
+            <span class="flex items-center space-x-1">
+              <span class="w-1.5 h-1.5 rounded-full ${meta.dot}"></span>
+              <span class="${meta.color}">${meta.name}</span>
+            </span>
+            ${item.pub_date ? `
+            <span class="flex items-center space-x-1">
+              <i class="fa fa-clock-o"></i>
+              <span>${fmtDate(item.pub_date)}</span>
+            </span>
+            ` : ''}
+            ${timeRel ? `<span class="text-gray-500 font-medium">${timeRel}</span>` : ''}
+
+            <div class="flex items-center space-x-1.5 ml-auto">
+              <i class="fa fa-fire text-orange-400"></i>
+              <div class="w-16 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                <div class="h-full rounded-full heat-bar" style="width: ${heatPercent}%"></div>
+              </div>
+              <span class="text-orange-500 font-medium">${item.pv || 0}</span>
+            </div>
+          </div>
         </div>
       </div>
     </article>
+  `;
+}
+
+function renderTagCloud() {
+  const tagCounts = {};
+  newsData.forEach(n => {
+    (n.tags || []).forEach(t => {
+      tagCounts[t] = (tagCounts[t] || 0) + 1;
+    });
+  });
+
+  const sortedTags = Object.entries(tagCounts).sort((a, b) => b[1] - a[1]).slice(0, 15);
+
+  if (sortedTags.length === 0) {
+    document.getElementById('tag-cloud').innerHTML = '<span class="text-sm text-gray-400">暂无标签</span>';
+    return;
+  }
+
+  document.getElementById('tag-cloud').innerHTML = sortedTags.map(([name, count]) => {
+    const tc = tagColors[name] || { color: '#6b7280', bg: '#f3f4f6' };
+    return `<button onclick="filterByTag('${name}')"
+      class="tag-badge px-2.5 py-1 rounded-lg text-xs font-medium transition-all hover:scale-105"
+      style="color:${tc.color};background:${tc.bg};border:1px solid ${tc.color}25;">
+      ${name} <span class="opacity-60">${count}</span>
+    </button>`;
+  }).join('');
+}
+
+function renderSourceStats() {
+  const counts = {};
+  newsData.forEach(n => {
+    counts[n.source] = (counts[n.source] || 0) + 1;
+  });
+  const total = newsData.length;
+
+  const colors = {
+    'AiBase': { bar: 'bg-blue-500', bg: 'bg-blue-50' },
+    'IT之家': { bar: 'bg-emerald-500', bg: 'bg-emerald-50' },
+  };
+
+  document.getElementById('source-stats').innerHTML = Object.entries(counts).map(([source, count]) => {
+    const pct = total ? Math.round((count / total) * 100) : 0;
+    const c = colors[source] || { bar: 'bg-gray-500', bg: 'bg-gray-50' };
+    return `
+      <div>
+        <div class="flex items-center justify-between text-xs mb-1">
+          <span class="text-gray-600 font-medium">${source}</span>
+          <span class="text-gray-400">${count} 条 (${pct}%)</span>
+        </div>
+        <div class="w-full h-2 ${c.bg} rounded-full overflow-hidden">
+          <div class="h-full ${c.bar} rounded-full transition-all" style="width: ${pct}%"></div>
+        </div>
+      </div>
     `;
   }).join('');
 }
 
-document.getElementById('tagFilters').addEventListener('click', e => {
-  if (e.target.classList.contains('tag-pill')) {
-    currentTag = e.target.dataset.tag;
-    renderList();
-  }
-});
+function filterByTag(tag) {
+  document.getElementById('search-input').value = tag;
+  currentSearch = tag.toLowerCase();
+  applyFilters();
+}
 
-document.getElementById('searchInput').addEventListener('input', e => {
-  searchKeyword = e.target.value;
-  renderList();
-});
-
-document.querySelectorAll('.sort-btn').forEach(btn => {
-  btn.addEventListener('click', e => {
-    currentSort = e.target.dataset.sort;
-    document.querySelectorAll('.sort-btn').forEach(b => {
-      b.classList.remove('bg-slate-800', 'text-white');
-      b.classList.add('text-slate-600', 'hover:bg-slate-50');
-    });
-    e.target.classList.remove('text-slate-600', 'hover:bg-slate-50');
-    e.target.classList.add('bg-slate-800', 'text-white');
-    renderList();
-  });
-});
-
-renderList();
+init();
 </script>
 </body>
 </html>
