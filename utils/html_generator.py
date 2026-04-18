@@ -169,8 +169,8 @@ _HTML_TEMPLATE = """<!DOCTYPE html>
 
       <!-- 左侧：新闻列表 -->
       <div class="flex-1 min-w-0">
-        <!-- 排序切换 -->
-        <div class="bg-white rounded-xl shadow-card p-1 mb-5 flex space-x-1 overflow-x-auto">
+        <!-- 排序与时间范围 -->
+        <div class="bg-white rounded-xl shadow-card p-1 mb-5 flex items-center gap-1 overflow-x-auto">
           <button onclick="setSort('heat')" id="tab-heat"
                   class="category-tab active flex-1 min-w-[80px] px-4 py-2.5 text-sm font-medium rounded-lg text-center transition-colors text-indigo-700 bg-indigo-50">
             <i class="fa fa-fire mr-1.5"></i>按热度
@@ -179,6 +179,15 @@ _HTML_TEMPLATE = """<!DOCTYPE html>
                   class="category-tab flex-1 min-w-[80px] px-4 py-2.5 text-sm font-medium rounded-lg text-center transition-colors text-gray-600 hover:bg-gray-50">
             <i class="fa fa-clock-o mr-1.5"></i>按时间
           </button>
+          <div class="shrink-0 pl-2 border-l border-gray-200 ml-1">
+            <select id="time-range" onchange="setTimeRange(this.value)"
+                    class="px-3 py-2 text-sm rounded-lg border border-gray-200 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 cursor-pointer">
+              <option value="all">全部时间</option>
+              <option value="today">今日</option>
+              <option value="7days">最近7天</option>
+              <option value="30days">最近30天</option>
+            </select>
+          </div>
         </div>
 
         <!-- 热门标签 -->
@@ -267,6 +276,7 @@ const tagColors = {
 let currentTag = '';
 let currentSearch = '';
 let currentSort = 'heat';
+let currentTimeRange = 'all';
 
 function fmtDate(iso) {
   if (!iso) return '未知时间';
@@ -326,9 +336,33 @@ function setTag(tag) {
   applyFilters();
 }
 
+function setTimeRange(range) {
+  currentTimeRange = range;
+  applyFilters();
+}
+
 function handleSearch(value) {
   currentSearch = value.trim().toLowerCase();
   applyFilters();
+}
+
+function isInTimeRange(pubDate, range) {
+  if (!pubDate || range === 'all') return true;
+  const now = new Date();
+  const pub = new Date(pubDate);
+  const diffMs = now - pub;
+  const diffDays = diffMs / 86400000;
+
+  if (range === 'today') {
+    return diffDays < 1;
+  }
+  if (range === '7days') {
+    return diffDays < 7;
+  }
+  if (range === '30days') {
+    return diffDays < 30;
+  }
+  return true;
 }
 
 function applyFilters() {
@@ -339,7 +373,8 @@ function applyFilters() {
       (n.description || '').toLowerCase().includes(currentSearch) ||
       (n.tags || []).some(t => t.toLowerCase().includes(currentSearch)) ||
       (n.source || '').toLowerCase().includes(currentSearch);
-    return matchTag && matchSearch;
+    const matchTime = isInTimeRange(n.pub_date, currentTimeRange);
+    return matchTag && matchSearch && matchTime;
   });
 
   if (currentSort === 'time') {
@@ -498,20 +533,32 @@ init();
 """
 
 
-def build_html(items: list[NewsItem], output_path: str) -> str:
+def build_html(items: list[NewsItem] | list[dict], output_path: str) -> str:
     """生成 HTML 预览页面,返回输出路径."""
     data = []
     for item in items:
-        data.append({
-            "title": item.title,
-            "link": item.link,
-            "description": item.description,
-            "source": item.source,
-            "pub_date": item.pub_date.isoformat() if item.pub_date else None,
-            "tags": item.tags,
-            "pv": item.pv,
-            "heat_score": item.heat_score,
-        })
+        if isinstance(item, dict):
+            data.append({
+                "title": item["title"],
+                "link": item["link"],
+                "description": item["description"],
+                "source": item["source"],
+                "pub_date": item["pub_date"],
+                "tags": item["tags"],
+                "pv": item["pv"],
+                "heat_score": item.get("heat_score", 0),
+            })
+        else:
+            data.append({
+                "title": item.title,
+                "link": item.link,
+                "description": item.description,
+                "source": item.source,
+                "pub_date": item.pub_date.isoformat() if item.pub_date else None,
+                "tags": item.tags,
+                "pv": item.pv,
+                "heat_score": item.heat_score,
+            })
 
     html = (
         _HTML_TEMPLATE

@@ -7,6 +7,7 @@ import os
 # 输出文件路径
 OUTPUT_RSS_PATH = os.environ.get("OUTPUT_RSS_PATH", "output/airss.xml")
 OUTPUT_HTML_PATH = os.environ.get("OUTPUT_HTML_PATH", "output/index.html")
+HISTORY_PATH = os.environ.get("HISTORY_PATH", "output/history.json")
 
 # 时区
 TIMEZONE = "Asia/Shanghai"

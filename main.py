@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import json
 import logging
+import os
 import sys
 from datetime import datetime, timezone
 
@@ -13,6 +15,7 @@ from config import (
     DEFAULT_PV,
     HEAT_24H_WINDOW,
     HEAT_GRAVITY,
+    HISTORY_PATH,
     OUTPUT_HTML_PATH,
     OUTPUT_RSS_PATH,
     SCHEDULE_HOURS,
@@ -54,6 +57,57 @@ def _heat_score(item: NewsItem) -> float:
     return -hours_ago
 
 
+def _load_history() -> list[dict]:
+    """加载历史数据."""
+    if not os.path.exists(HISTORY_PATH):
+        return []
+    try:
+        with open(HISTORY_PATH, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except (json.JSONDecodeError, OSError) as exc:
+        logger.warning("历史数据加载失败: %s", exc)
+        return []
+
+
+def _save_history(history: list[dict]) -> None:
+    """保存历史数据."""
+    os.makedirs(os.path.dirname(HISTORY_PATH) or ".", exist_ok=True)
+    with open(HISTORY_PATH, "w", encoding="utf-8") as f:
+        json.dump(history, f, ensure_ascii=False, indent=2)
+
+
+def _merge_to_history(items: list[NewsItem]) -> list[dict]:
+    """将新抓取的文章合并到历史数据中，返回完整历史."""
+    history = _load_history()
+    history_map: dict[str, dict] = {h["link"]: h for h in history if h.get("link")}
+
+    now = datetime.now(timezone.utc).isoformat()
+    for item in items:
+        if not item.link:
+            continue
+        entry = {
+            "title": item.title,
+            "link": item.link,
+            "description": item.description,
+            "source": item.source,
+            "pub_date": item.pub_date.isoformat() if item.pub_date else None,
+            "tags": item.tags,
+            "pv": item.pv,
+            "heat_score": item.heat_score,
+            "fetched_at": now,
+        }
+        history_map[item.link] = entry
+
+    merged = list(history_map.values())
+    # 按抓取时间倒序，保留最近 90 天的数据
+    cutoff = datetime.now(timezone.utc).timestamp() - 90 * 86400
+    merged = [
+        h for h in merged
+        if h.get("fetched_at") and datetime.fromisoformat(h["fetched_at"]).timestamp() > cutoff
+    ]
+    return merged
+
+
 def aggregate() -> None:
     """执行一次完整的抓取、聚合、生成 RSS 流程."""
     logger.info("===== 开始聚合任务 =====")
@@ -83,10 +137,15 @@ def aggregate() -> None:
     # 默认按热度排序：纯按 PV 降序
     unique_items.sort(key=lambda i: i.pv, reverse=True)
 
+    # 合并到历史数据
+    full_history = _merge_to_history(unique_items)
+    _save_history(full_history)
+    logger.info("历史数据已更新: %d 条", len(full_history))
+
     output_path = build_rss(unique_items, OUTPUT_RSS_PATH)
-    html_path = build_html(unique_items, OUTPUT_HTML_PATH)
+    html_path = build_html(full_history, OUTPUT_HTML_PATH)
     logger.info("RSS 已生成: %s", output_path)
-    logger.info("HTML 已生成: %s (共 %d 条)", html_path, len(unique_items))
+    logger.info("HTML 已生成: %s (共 %d 条)", html_path, len(full_history))
 
 
 def run_scheduler() -> None:
