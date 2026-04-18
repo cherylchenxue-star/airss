@@ -169,20 +169,23 @@ _HTML_TEMPLATE = """<!DOCTYPE html>
 
       <!-- 左侧：新闻列表 -->
       <div class="flex-1 min-w-0">
-        <!-- 分类筛选 -->
+        <!-- 排序切换 -->
         <div class="bg-white rounded-xl shadow-card p-1 mb-5 flex space-x-1 overflow-x-auto">
-          <button onclick="filterSource('all')" id="tab-all"
+          <button onclick="setSort('heat')" id="tab-heat"
                   class="category-tab active flex-1 min-w-[80px] px-4 py-2.5 text-sm font-medium rounded-lg text-center transition-colors text-indigo-700 bg-indigo-50">
-            <i class="fa fa-th-large mr-1.5"></i>全部
+            <i class="fa fa-fire mr-1.5"></i>按热度
           </button>
-          <button onclick="filterSource('aibase')" id="tab-aibase"
+          <button onclick="setSort('time')" id="tab-time"
                   class="category-tab flex-1 min-w-[80px] px-4 py-2.5 text-sm font-medium rounded-lg text-center transition-colors text-gray-600 hover:bg-gray-50">
-            <i class="fa fa-flag mr-1.5 text-blue-500"></i>AiBase
+            <i class="fa fa-clock-o mr-1.5"></i>按时间
           </button>
-          <button onclick="filterSource('ithome')" id="tab-ithome"
-                  class="category-tab flex-1 min-w-[80px] px-4 py-2.5 text-sm font-medium rounded-lg text-center transition-colors text-gray-600 hover:bg-gray-50">
-            <i class="fa fa-globe mr-1.5 text-emerald-500"></i>IT之家
-          </button>
+        </div>
+
+        <!-- 热门标签 -->
+        <div class="mb-5">
+          <div id="tag-filters" class="flex flex-wrap gap-2">
+            <!-- JS渲染 -->
+          </div>
         </div>
 
         <!-- 搜索框 -->
@@ -204,17 +207,6 @@ _HTML_TEMPLATE = """<!DOCTYPE html>
 
       <!-- 右侧：侧边栏 -->
       <aside class="w-full lg:w-80 space-y-5">
-        <!-- 热门标签云 -->
-        <div class="bg-white rounded-xl shadow-card p-5">
-          <h3 class="text-sm font-bold text-gray-800 mb-4 flex items-center">
-            <i class="fa fa-tags text-indigo-500 mr-2"></i>
-            热门标签
-          </h3>
-          <div id="tag-cloud" class="flex flex-wrap gap-2">
-            <span class="text-sm text-gray-400">加载中...</span>
-          </div>
-        </div>
-
         <!-- 来源分布 -->
         <div class="bg-white rounded-xl shadow-card p-5">
           <h3 class="text-sm font-bold text-gray-800 mb-4 flex items-center">
@@ -272,7 +264,7 @@ const tagColors = {
   '海外新闻': { color: '#0ea5e9', bg: '#e0f2fe' },
 };
 
-let currentSource = 'all';
+let currentTag = '';
 let currentSearch = '';
 let currentSort = 'heat';
 
@@ -302,29 +294,35 @@ function init() {
   document.getElementById('aibase-count').textContent = newsData.filter(i => i.source === 'AiBase').length;
   document.getElementById('ithome-count').textContent = newsData.filter(i => i.source === 'IT之家').length;
   document.getElementById('in24h-count').textContent = newsData.filter(i => i.pub_date && (Date.now() - new Date(i.pub_date).getTime()) < 86400000).length;
-  applyFilters();
-  renderTagCloud();
+  renderTagFilters();
   renderSourceStats();
+  applyFilters();
 }
 
 function refreshData() {
   const icon = document.getElementById('refresh-icon');
   icon.classList.add('fa-spin');
   applyFilters();
-  renderTagCloud();
+  renderTagFilters();
   renderSourceStats();
   setTimeout(() => icon.classList.remove('fa-spin'), 500);
 }
 
-function filterSource(src) {
-  currentSource = src;
+function setSort(sortType) {
+  currentSort = sortType;
   document.querySelectorAll('.category-tab').forEach(btn => {
     btn.classList.remove('active', 'text-indigo-700', 'bg-indigo-50');
     btn.classList.add('text-gray-600');
   });
-  const activeBtn = document.getElementById('tab-' + src);
+  const activeBtn = document.getElementById('tab-' + sortType);
   activeBtn.classList.add('active', 'text-indigo-700', 'bg-indigo-50');
   activeBtn.classList.remove('text-gray-600');
+  applyFilters();
+}
+
+function setTag(tag) {
+  currentTag = tag;
+  renderTagFilters();
   applyFilters();
 }
 
@@ -335,15 +333,13 @@ function handleSearch(value) {
 
 function applyFilters() {
   let filtered = newsData.filter(n => {
-    const matchSrc = currentSource === 'all' ||
-      (currentSource === 'aibase' && n.source === 'AiBase') ||
-      (currentSource === 'ithome' && n.source === 'IT之家');
+    const matchTag = !currentTag || (n.tags || []).includes(currentTag);
     const matchSearch = !currentSearch ||
       (n.title || '').toLowerCase().includes(currentSearch) ||
       (n.description || '').toLowerCase().includes(currentSearch) ||
       (n.tags || []).some(t => t.toLowerCase().includes(currentSearch)) ||
       (n.source || '').toLowerCase().includes(currentSearch);
-    return matchSrc && matchSearch;
+    return matchTag && matchSearch;
   });
 
   if (currentSort === 'time') {
@@ -433,7 +429,7 @@ function renderNewsCard(item, index) {
   `;
 }
 
-function renderTagCloud() {
+function renderTagFilters() {
   const tagCounts = {};
   newsData.forEach(n => {
     (n.tags || []).forEach(t => {
@@ -444,18 +440,26 @@ function renderTagCloud() {
   const sortedTags = Object.entries(tagCounts).sort((a, b) => b[1] - a[1]).slice(0, 15);
 
   if (sortedTags.length === 0) {
-    document.getElementById('tag-cloud').innerHTML = '<span class="text-sm text-gray-400">暂无标签</span>';
+    document.getElementById('tag-filters').innerHTML = '<span class="text-sm text-gray-400">暂无标签</span>';
     return;
   }
 
-  document.getElementById('tag-cloud').innerHTML = sortedTags.map(([name, count]) => {
+  let html = '';
+  const allActive = !currentTag ? 'text-indigo-700 bg-indigo-50 border-indigo-200' : 'text-gray-600 bg-white border-gray-200 hover:bg-gray-50';
+  html += `<button onclick="setTag('')" class="px-2.5 py-1 rounded-lg text-xs font-medium border transition-all ${allActive}">全部</button>`;
+
+  html += sortedTags.map(([name, count]) => {
     const tc = tagColors[name] || { color: '#6b7280', bg: '#f3f4f6' };
-    return `<button onclick="filterByTag('${name}')"
-      class="tag-badge px-2.5 py-1 rounded-lg text-xs font-medium transition-all hover:scale-105"
-      style="color:${tc.color};background:${tc.bg};border:1px solid ${tc.color}25;">
+    const active = currentTag === name;
+    const activeClass = active ? 'ring-2 ring-indigo-500 ring-offset-1' : '';
+    return `<button onclick="setTag('${name}')"
+      class="tag-badge px-2.5 py-1 rounded-lg text-xs font-medium border transition-all hover:scale-105 ${activeClass}"
+      style="color:${tc.color};background:${tc.bg};border-color:${tc.color}30;">
       ${name} <span class="opacity-60">${count}</span>
     </button>`;
   }).join('');
+
+  document.getElementById('tag-filters').innerHTML = html;
 }
 
 function renderSourceStats() {
@@ -485,12 +489,6 @@ function renderSourceStats() {
       </div>
     `;
   }).join('');
-}
-
-function filterByTag(tag) {
-  document.getElementById('search-input').value = tag;
-  currentSearch = tag.toLowerCase();
-  applyFilters();
 }
 
 init();
