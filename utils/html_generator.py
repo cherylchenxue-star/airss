@@ -94,25 +94,6 @@ _HTML_TEMPLATE = """<!DOCTYPE html>
         </div>
       </div>
 
-      <!-- Stats -->
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-6">
-        <div class="rounded-lg bg-slate-50 border border-slate-200 p-3">
-          <div class="text-xs text-slate-500">文章总数</div>
-          <div class="text-xl font-bold text-slate-900 mt-1" id="statTotal">0</div>
-        </div>
-        <div class="rounded-lg bg-blue-50 border border-blue-100 p-3">
-          <div class="text-xs text-blue-600">AiBase</div>
-          <div class="text-xl font-bold text-blue-700 mt-1" id="statAibase">0</div>
-        </div>
-        <div class="rounded-lg bg-emerald-50 border border-emerald-100 p-3">
-          <div class="text-xs text-emerald-600">IT之家</div>
-          <div class="text-xl font-bold text-emerald-700 mt-1" id="statIthome">0</div>
-        </div>
-        <div class="rounded-lg bg-orange-50 border border-orange-100 p-3">
-          <div class="text-xs text-orange-600">24h 内</div>
-          <div class="text-xl font-bold text-orange-700 mt-1" id="stat24h">0</div>
-        </div>
-      </div>
     </div>
   </header>
 
@@ -209,17 +190,6 @@ function sourceMeta(source) {
   return { name: source, color: 'text-slate-700 bg-slate-100 border-slate-200', bar: 'bg-slate-400' };
 }
 
-function renderStats(items) {
-  const total = items.length;
-  const aibase = items.filter(i => i.source === 'AiBase').length;
-  const ithome = items.filter(i => i.source === 'IT之家').length;
-  const in24h = items.filter(i => i.pub_date && (Date.now() - new Date(i.pub_date).getTime()) < 86400000).length;
-  document.getElementById('statTotal').textContent = total;
-  document.getElementById('statAibase').textContent = aibase;
-  document.getElementById('statIthome').textContent = ithome;
-  document.getElementById('stat24h').textContent = in24h;
-}
-
 function renderTags(filteredItems) {
   const counts = {};
   filteredItems.forEach(item => {
@@ -260,7 +230,6 @@ function renderList() {
     filtered.sort((a, b) => (b.pv || 0) - (a.pv || 0));
   }
 
-  renderStats(filtered);
   renderTags(filtered);
 
   if (filtered.length === 0) {
