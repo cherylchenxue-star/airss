@@ -19,6 +19,7 @@ _HTML_TEMPLATE = """<!DOCTYPE html>
 <title>每日AI新闻资讯</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&amp;display=swap" />
 <style>
   :root {
     --primary: #4f46e5;
@@ -49,6 +50,9 @@ _HTML_TEMPLATE = """<!DOCTYPE html>
   .tag-pill:hover {
     transform: scale(1.05);
   }
+  .headline-font {
+    font-family: 'Noto Serif SC', Georgia, serif;
+  }
   .search-glow:focus {
     box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
   }
@@ -65,7 +69,7 @@ _HTML_TEMPLATE = """<!DOCTYPE html>
             <i class="fa fa-bolt text-yellow-400 text-lg"></i>
           </div>
           <div>
-            <h1 class="text-lg font-bold tracking-tight">每日AI新闻资讯</h1>
+            <h1 class="text-lg font-bold tracking-tight headline-font">每日AI新闻资讯</h1>
             <p class="text-[11px] text-indigo-200 hidden sm:block">聚合 AiBase · IT之家 核心AI动态</p>
           </div>
         </div>
@@ -81,7 +85,7 @@ _HTML_TEMPLATE = """<!DOCTYPE html>
       <div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
           <p class="text-sm font-semibold text-indigo-600 mb-1">AI NEWS AGGREGATOR</p>
-          <h2 class="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight">每日AI新闻资讯</h2>
+          <h2 class="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight headline-font">每日AI新闻资讯</h2>
           <p class="text-slate-500 mt-2 max-w-xl">按 24 小时热度智能排序，助你第一时间掌握人工智能领域核心动态。</p>
         </div>
         <div class="text-right">
@@ -275,7 +279,7 @@ function renderList() {
       <div class="shrink-0 w-1.5 rounded-full ${meta.bar}"></div>
       <div class="flex-1 min-w-0">
         <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
-          <h3 class="text-lg font-bold text-slate-900 leading-snug hover:text-indigo-600 transition">
+          <h3 class="text-lg font-bold text-slate-900 leading-snug hover:text-indigo-600 transition headline-font">
             <a href="${item.link}" target="_blank" class="focus:outline-none">${item.title}</a>
           </h3>
           <div class="flex items-center gap-2 shrink-0">
