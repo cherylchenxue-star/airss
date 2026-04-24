@@ -2,8 +2,8 @@ name: Deploy AirSS
 
 on:
   schedule:
-    # 北京时间 06:00, 14:00, 23:00 对应 UTC 22:00, 06:00, 15:00
-    - cron: '0 6,15,22 * * *'
+    # 每 30 分钟抓取一次（UTC），确保数据接近实时
+    - cron: '*/30 * * * *'
   workflow_dispatch:
   push:
     branches:

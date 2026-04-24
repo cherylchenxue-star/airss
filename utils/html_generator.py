@@ -240,7 +240,7 @@ _HTML_TEMPLATE = """<!DOCTYPE html>
               <span>RSS 源</span>
             </a>
             <span class="text-indigo-300">|</span>
-            <span class="text-xs text-indigo-500/60">数据每 6h 更新</span>
+            <span class="text-xs text-indigo-500/60">数据每 30 分钟更新</span>
           </div>
         </div>
       </aside>
